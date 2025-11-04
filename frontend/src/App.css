@@ -1,0 +1,132 @@
+/* Global Styles */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  margin: 0;
+  padding: 0;
+}
+
+.hero {
+  background: url("https://i.pinimg.com/736x/ad/6f/41/ad6f41c5eee4e16d6523aea9985aebae.jpg") no-repeat center center/cover;
+  color: white;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(86, 85, 85, 0.6);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.genre-card img {
+  border-radius: 10px;
+  height: 180px;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.genre-card:hover img {
+  transform: scale(1.05);
+}
+
+.book-card img {
+  height: 250px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.section-title {
+  text-align: center;
+  margin: 40px 0;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+/* Navbar styles */
+.navbar-brand {
+  font-weight: bold;
+}
+
+/* Footer styles */
+footer {
+  background: #222;
+  color: #ccc;
+  padding: 20px;
+  text-align: center;
+  margin-top: 50px;
+}
+
+footer a {
+  color: #ccc;
+  text-decoration: none;
+  margin: 0 10px;
+}
+
+footer a:hover {
+  color: #fff;
+}
+
+/* Button styles */
+.btn-primary {
+  background-color: #2980b9;
+  border-color: #2980b9;
+}
+
+.btn-primary:hover {
+  background-color: #1c5d8a;
+  border-color: #1c5d8a;
+}
+
+/* Card hover effects */
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .hero {
+    height: 60vh;
+  }
+  
+  .hero h1 {
+    font-size: 2rem;
+  }
+  
+  .book-card img {
+    height: 200px;
+  }
+  
+  .navbar-collapse {
+    margin-top: 10px;
+  }
+}
+
+/* Write Now styles */
+.write-card {
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.write-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
