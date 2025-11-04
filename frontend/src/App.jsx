@@ -16,6 +16,7 @@ const StartWriting = lazy(() => import('./pages/StartWriting.jsx'));
 const WriteNow = lazy(() => import('./pages/WriteNow.jsx'));
 const WhyChooseUs = lazy(() => import('./pages/WhyChooseUs.jsx'));
 const AllBooks = lazy(() => import('./pages/AllBooks.jsx'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword.jsx'));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -44,6 +45,7 @@ function App() {
               <Route path="/writenow" element={<WriteNow />} />
               <Route path="/whychooseus" element={<WhyChooseUs />} />
               <Route path="/allbooks" element={<AllBooks />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
             </Routes>
           </Suspense>
         </main>

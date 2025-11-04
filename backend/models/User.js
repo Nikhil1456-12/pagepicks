@@ -36,6 +36,11 @@ const userSchema = new mongoose.Schema({
     trim: true,
     maxlength: 50
   },
+  phoneNumber: {
+    type: String,
+    trim: true,
+    maxlength: 15
+  },
   bio: {
     type: String,
     trim: true,
@@ -60,7 +65,7 @@ const userSchema = new mongoose.Schema({
   // Account Management
   isEmailVerified: {
     type: Boolean,
-    default: false
+    default: true
   },
   role: {
     type: String,
@@ -85,6 +90,13 @@ const userSchema = new mongoose.Schema({
     type: String
   },
   passwordResetExpires: {
+    type: Date
+  },
+  passwordResetAttempts: {
+    type: Number,
+    default: 0
+  },
+  lastPasswordResetRequest: {
     type: Date
   },
   emailVerificationToken: {

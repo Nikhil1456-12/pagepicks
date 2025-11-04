@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/User');
+const { sendPasswordResetEmail } = require('../config/email');
 
 // Helper function to generate JWT
 const generateToken = (id) => {
@@ -45,9 +46,7 @@ const registerUser = asyncHandler(async (req, res) => {
      });
 
      if (user) {
-         // Generate email verification token
-         const emailVerificationToken = user.generateEmailVerificationToken();
-         await user.save({ validateBeforeSave: false });
+         // Email verification is now set to true by default, no token generation needed
 
          res.status(201).json({
              _id: user._id,
@@ -58,7 +57,7 @@ const registerUser = asyncHandler(async (req, res) => {
              favoriteGenres: user.favoriteGenres,
              isEmailVerified: user.isEmailVerified,
              token: generateToken(user._id),
-             message: 'Registration successful! Please check your email to verify your account.'
+             message: 'Registration successful!'
          });
      } else {
          res.status(400);
@@ -174,32 +173,76 @@ const verifyEmail = asyncHandler(async (req, res) => {
 // @route   POST /api/users/forgot-password
 // @access  Public
 const forgotPassword = asyncHandler(async (req, res) => {
-     const { email } = req.body;
+      const { email, phoneNumber } = req.body;
 
-     if (!email) {
-         res.status(400);
-         throw new Error('Please provide an email address');
-     }
+      if (!email && !phoneNumber) {
+          res.status(400);
+          throw new Error('Please provide an email address or phone number');
+      }
 
-     const user = await User.findOne({ email });
+      let user;
+      if (email) {
+          user = await User.findOne({ email });
+      } else if (phoneNumber) {
+          user = await User.findOne({ phoneNumber });
+      }
 
-     if (!user) {
-         res.status(404);
-         throw new Error('No user found with this email address');
-     }
+      if (!user) {
+          console.log('No user found with email:', email, 'or phone:', phoneNumber);
+          res.status(200); // Return success to avoid revealing user existence
+          return res.json({
+              message: 'If an account with that email or phone number exists, password reset instructions have been sent'
+          });
+      }
 
-     // Generate reset token
-     const resetToken = user.generatePasswordResetToken();
-     await user.save({ validateBeforeSave: false });
+      // Rate limiting: Check if user has made too many requests recently
+      const now = new Date();
+      const timeWindow = 15 * 60 * 1000; // 15 minutes
+      const maxAttempts = 5;
 
-     // In a real application, you would send an email here
-     // For now, we'll just return the token in development
-     res.status(200).json({
-         message: 'Password reset token generated',
-         resetToken, // Remove this in production and send via email instead
-         note: 'In production, this token would be sent via email'
-     });
- });
+      if (user.lastPasswordResetRequest &&
+          (now - user.lastPasswordResetRequest) < timeWindow &&
+          user.passwordResetAttempts >= maxAttempts) {
+          res.status(429);
+          throw new Error('Too many password reset requests. Please try again later.');
+      }
+
+      // Reset attempts if time window has passed
+      if (!user.lastPasswordResetRequest ||
+          (now - user.lastPasswordResetRequest) >= timeWindow) {
+          user.passwordResetAttempts = 0;
+      }
+
+      // Increment attempts
+      user.passwordResetAttempts += 1;
+      user.lastPasswordResetRequest = now;
+
+      // Generate reset token
+      const resetToken = user.generatePasswordResetToken();
+      await user.save({ validateBeforeSave: false });
+
+      // Send password reset email
+      const emailResult = await sendPasswordResetEmail(user.email, resetToken);
+
+      if (emailResult.success) {
+          console.log('Password reset email sent successfully to:', user.email, 'Message ID:', emailResult.messageId);
+          res.status(200).json({
+              message: 'If an account with that email exists, password reset instructions have been sent',
+              // For development only - remove in production
+              resetToken: resetToken,
+              note: 'In production, this token would be sent via email'
+          });
+      } else {
+          console.error('Failed to send password reset email:', emailResult.error);
+          // Still return success to avoid revealing user existence
+          res.status(200).json({
+              message: 'If an account with that email exists, password reset instructions have been sent',
+              // For development only - remove in production
+              resetToken: resetToken,
+              note: 'In production, this token would be sent via email'
+          });
+      }
+  });
 
 // @desc    Reset password with token
 // @route   POST /api/users/reset-password/:token
@@ -229,10 +272,18 @@ const resetPassword = asyncHandler(async (req, res) => {
          throw new Error('Invalid or expired reset token');
      }
 
+     // Check if token has expired
+     if (user.passwordResetExpires < Date.now()) {
+         res.status(400);
+         throw new Error('Password reset token has expired. Please request a new one.');
+     }
+
      // Update password (pre-save hook will hash it)
      user.password = password;
      user.passwordResetToken = undefined;
      user.passwordResetExpires = undefined;
+     user.passwordResetAttempts = 0; // Reset attempts on successful password change
+     user.lastPasswordResetRequest = undefined;
 
      await user.save();
 
