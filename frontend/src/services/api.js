@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5001/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://pagepicks-backend.onrender.com/api';
 
 // Simple cache implementation
 const cache = new Map();
